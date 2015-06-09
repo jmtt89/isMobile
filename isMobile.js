@@ -3,7 +3,7 @@
  *
  * A simple library to detect Apple phones and tablets,
  * Android phones and tablets, other mobile devices (like blackberry, mini-opera and windows phone),
- * and any kind of seven inch device, via user agent sniffing.
+ * via user agent sniffing.
  *
  * @author: Kai Mallea (kmallea@gmail.com)
  *
@@ -14,7 +14,7 @@
     var apple_phone         = /iPhone/i,
         apple_ipod          = /iPod/i,
         apple_tablet        = /iPad/i,
-        android_phone       = /(?=.*\bAndroid\b)(?=.*\bMobile\b)/i, // Match 'Android' AND 'Mobile'
+        android_phone       = /(?=.*\bAndroid\b)(?=.*\bMobile\b).*/i, // Match 'Android' AND 'Mobile'
         android_tablet      = /Android/i,
         windows_phone       = /IEMobile/i,
         windows_tablet      = /(?=.*\bWindows\b)(?=.*\bARM\b)/i, // Match 'Windows' AND 'ARM'
@@ -22,30 +22,6 @@
         other_blackberry_10 = /BB10/i,
         other_opera         = /Opera Mini/i,
         other_firefox       = /(?=.*\bFirefox\b)(?=.*\bMobile\b)/i, // Match 'Firefox' AND 'Mobile'
-        seven_inch = new RegExp(
-            '(?:' +         // Non-capturing group
-
-            'Nexus 7' +     // Nexus 7
-
-            '|' +           // OR
-
-            'BNTV250' +     // B&N Nook Tablet 7 inch
-
-            '|' +           // OR
-
-            'Kindle Fire' + // Kindle Fire
-
-            '|' +           // OR
-
-            'Silk' +        // Kindle Fire, Silk Accelerated
-
-            '|' +           // OR
-
-            'GT-P1000' +    // Galaxy Tab 7 inch
-
-            ')',            // End non-capturing group
-
-            'i');           // Case-insensitive matching
 
     var match = function(regex, userAgent) {
         return regex.test(userAgent);
@@ -58,12 +34,18 @@
             phone:  match(apple_phone, ua),
             ipod:   match(apple_ipod, ua),
             tablet: match(apple_tablet, ua),
-            device: match(apple_phone, ua) || match(apple_ipod, ua) || match(apple_tablet, ua)
+            device: match(apple_phone, ua) || match(apple_ipod, ua) || match(apple_tablet, ua),
+            getVersion: function(){
+                return (ua.exec('OS.*(\d+(?:_\d+){1,2})\s{0}')[1]).replace(/_/g, ".")
+            }
         };
         this.android = {
             phone:  match(android_phone, ua),
             tablet: !match(android_phone, ua) && match(android_tablet, ua),
-            device: match(android_phone, ua) || match(android_tablet, ua)
+            device: match(android_phone, ua) || match(android_tablet, ua),
+            getVersion: function(){
+                return ua.exec('Android.*(\d+(?:\.\d+){1,2});{0}')[1]
+            }
         };
         this.windows = {
             phone:  match(windows_phone, ua),
@@ -77,8 +59,8 @@
             firefox:      match(other_firefox, ua),
             device:       match(other_blackberry, ua) || match(other_blackberry_10, ua) || match(other_opera, ua) || match(other_firefox, ua)
         };
-        this.seven_inch = match(seven_inch, ua);
-        this.any = this.apple.device || this.android.device || this.windows.device || this.other.device || this.seven_inch;
+
+        this.any = this.apple.device || this.android.device || this.windows.device || this.other.device;
         // excludes 'other' devices and ipods, targeting touchscreen phones
         this.phone = this.apple.phone || this.android.phone || this.windows.phone;
         // excludes 7 inch devices, classifying as phone or tablet is left to the user
